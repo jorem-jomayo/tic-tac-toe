@@ -3,10 +3,142 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tic Tac Toe – Offline & Online</title>
+    <title>Tic Tac Toe – Matrix Edition</title>
     <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
     <style>
-        /* ---------- Reset & Base ---------- */
+        /* ---------- Matrix Background ---------- */
+        /* From Uiverse.io by whoisyourdeadie – adapted */
+        .matrix-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            display: flex;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .matrix-pattern {
+            position: relative;
+            width: 1000px;
+            height: 100%;
+            flex-shrink: 0;
+        }
+
+        .matrix-column {
+            position: absolute;
+            top: -100%;
+            width: 20px;
+            height: 100%;
+            font-size: 16px;
+            line-height: 18px;
+            font-weight: bold;
+            animation: fall linear infinite;
+            white-space: nowrap;
+        }
+
+        .matrix-column::before {
+            content: "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: linear-gradient(
+                to bottom,
+                #ffffff 0%,
+                #ffffff 5%,
+                #00ff41 10%,
+                #00ff41 20%,
+                #00dd33 30%,
+                #00bb22 40%,
+                #009911 50%,
+                #007700 60%,
+                #005500 70%,
+                #003300 80%,
+                rgba(0, 255, 65, 0.5) 90%,
+                transparent 100%
+            );
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            writing-mode: vertical-lr;
+            letter-spacing: 1px;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .matrix-column:nth-child(1) { left: 0px; animation-delay: -2.5s; animation-duration: 3s; }
+        .matrix-column:nth-child(2) { left: 25px; animation-delay: -3.2s; animation-duration: 4s; }
+        .matrix-column:nth-child(3) { left: 50px; animation-delay: -1.8s; animation-duration: 2.5s; }
+        .matrix-column:nth-child(4) { left: 75px; animation-delay: -2.9s; animation-duration: 3.5s; }
+        .matrix-column:nth-child(5) { left: 100px; animation-delay: -1.5s; animation-duration: 3s; }
+        .matrix-column:nth-child(6) { left: 125px; animation-delay: -3.8s; animation-duration: 4.5s; }
+        .matrix-column:nth-child(7) { left: 150px; animation-delay: -2.1s; animation-duration: 2.8s; }
+        .matrix-column:nth-child(8) { left: 175px; animation-delay: -2.7s; animation-duration: 3.2s; }
+        .matrix-column:nth-child(9) { left: 200px; animation-delay: -3.4s; animation-duration: 3.8s; }
+        .matrix-column:nth-child(10) { left: 225px; animation-delay: -1.9s; animation-duration: 2.7s; }
+        .matrix-column:nth-child(11) { left: 250px; animation-delay: -3.6s; animation-duration: 4.2s; }
+        .matrix-column:nth-child(12) { left: 275px; animation-delay: -2.3s; animation-duration: 3.1s; }
+        .matrix-column:nth-child(13) { left: 300px; animation-delay: -3.1s; animation-duration: 3.6s; }
+        .matrix-column:nth-child(14) { left: 325px; animation-delay: -2.6s; animation-duration: 2.9s; }
+        .matrix-column:nth-child(15) { left: 350px; animation-delay: -3.7s; animation-duration: 4.1s; }
+        .matrix-column:nth-child(16) { left: 375px; animation-delay: -2.8s; animation-duration: 3.3s; }
+        .matrix-column:nth-child(17) { left: 400px; animation-delay: -3.3s; animation-duration: 3.7s; }
+        .matrix-column:nth-child(18) { left: 425px; animation-delay: -2.2s; animation-duration: 2.6s; }
+        .matrix-column:nth-child(19) { left: 450px; animation-delay: -3.9s; animation-duration: 4.3s; }
+        .matrix-column:nth-child(20) { left: 475px; animation-delay: -2.4s; animation-duration: 3.4s; }
+        .matrix-column:nth-child(21) { left: 500px; animation-delay: -1.7s; animation-duration: 2.4s; }
+        .matrix-column:nth-child(22) { left: 525px; animation-delay: -3.5s; animation-duration: 3.9s; }
+        .matrix-column:nth-child(23) { left: 550px; animation-delay: -2s; animation-duration: 3s; }
+        .matrix-column:nth-child(24) { left: 575px; animation-delay: -4s; animation-duration: 4.4s; }
+        .matrix-column:nth-child(25) { left: 600px; animation-delay: -1.6s; animation-duration: 2.3s; }
+        .matrix-column:nth-child(26) { left: 625px; animation-delay: -3s; animation-duration: 3.5s; }
+        .matrix-column:nth-child(27) { left: 650px; animation-delay: -3.8s; animation-duration: 4s; }
+        .matrix-column:nth-child(28) { left: 675px; animation-delay: -2.5s; animation-duration: 2.8s; }
+        .matrix-column:nth-child(29) { left: 700px; animation-delay: -3.2s; animation-duration: 3.6s; }
+        .matrix-column:nth-child(30) { left: 725px; animation-delay: -2.7s; animation-duration: 3.2s; }
+        .matrix-column:nth-child(31) { left: 750px; animation-delay: -1.8s; animation-duration: 2.7s; }
+        .matrix-column:nth-child(32) { left: 775px; animation-delay: -3.6s; animation-duration: 4.1s; }
+        .matrix-column:nth-child(33) { left: 800px; animation-delay: -2.1s; animation-duration: 3.1s; }
+        .matrix-column:nth-child(34) { left: 825px; animation-delay: -3.4s; animation-duration: 3.7s; }
+        .matrix-column:nth-child(35) { left: 850px; animation-delay: -2.8s; animation-duration: 2.9s; }
+        .matrix-column:nth-child(36) { left: 875px; animation-delay: -3.7s; animation-duration: 4.2s; }
+        .matrix-column:nth-child(37) { left: 900px; animation-delay: -2.3s; animation-duration: 3.3s; }
+        .matrix-column:nth-child(38) { left: 925px; animation-delay: -1.9s; animation-duration: 2.5s; }
+        .matrix-column:nth-child(39) { left: 950px; animation-delay: -3.5s; animation-duration: 3.8s; }
+        .matrix-column:nth-child(40) { left: 975px; animation-delay: -2.6s; animation-duration: 3.4s; }
+
+        .matrix-column:nth-child(odd)::before {
+            content: "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン123456789";
+        }
+        .matrix-column:nth-child(even)::before {
+            content: "ガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポヴァィゥェォャュョッABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        }
+        .matrix-column:nth-child(3n)::before {
+            content: "アカサタナハマヤラワイキシチニヒミリウクスツヌフムユルエケセテネヘメレオコソトノホモヨロヲン0987654321";
+        }
+        .matrix-column:nth-child(4n)::before {
+            content: "ンヲロヨモホノトソコオレメヘネテセケエルユムフヌツスクウリミヒニチシキイワラヤマハナタサカア";
+        }
+        .matrix-column:nth-child(5n)::before {
+            content: "ガザダバパギジヂビピグズヅブプゲゼデベペゴゾドボポヴァィゥェォャュョッ!@#$%^&*()_+-=[]{}|;:,.<>?";
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-10%); opacity: 1; }
+            100% { transform: translateY(200%); opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .matrix-column { font-size: 14px; line-height: 16px; width: 18px; }
+        }
+        @media (max-width: 480px) {
+            .matrix-column { font-size: 12px; line-height: 14px; width: 15px; }
+        }
+
+        /* ---------- Game Container (on top of Matrix) ---------- */
         * {
             margin: 0;
             padding: 0;
@@ -19,21 +151,25 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(145deg, #0f0c29, #302b63, #24243e);
+            background: #000; /* fallback */
             user-select: none;
+            position: relative;
+            z-index: 1;
         }
 
         .game-container {
-            background: rgba(255, 255, 255, 0.07);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(227, 242, 253, 0.12); /* #E3F2FD with transparency */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(144, 202, 249, 0.25); /* #90CAF9 */
             border-radius: 48px;
             padding: 40px 44px 48px;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(227, 242, 253, 0.08);
             width: 100%;
             max-width: 540px;
             transition: all 0.2s;
+            position: relative;
+            z-index: 2;
         }
 
         .header {
@@ -47,7 +183,7 @@
             font-size: 28px;
             font-weight: 700;
             letter-spacing: 1px;
-            background: linear-gradient(135deg, #f093fb, #f5576c, #4facfe);
+            background: linear-gradient(135deg, #E3F2FD, #90CAF9, #2196F3);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -56,23 +192,23 @@
         .scoreboard {
             display: flex;
             gap: 16px;
-            background: rgba(0, 0, 0, 0.35);
+            background: rgba(13, 71, 161, 0.25); /* #0D47A1 */
             padding: 8px 18px;
             border-radius: 60px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(144, 202, 249, 0.15);
         }
 
         .score-item {
             display: flex;
             align-items: center;
             gap: 6px;
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(227, 242, 253, 0.8);
             font-weight: 500;
             font-size: 15px;
         }
 
         .score-item span {
-            color: #fff;
+            color: #E3F2FD;
             font-weight: 700;
             font-size: 18px;
             min-width: 22px;
@@ -80,10 +216,10 @@
         }
 
         .score-item .x-color {
-            color: #4facfe;
+            color: #2196F3;
         }
         .score-item .o-color {
-            color: #f5576c;
+            color: #90CAF9;
         }
 
         /* ---------- Mode selector ---------- */
@@ -98,9 +234,9 @@
         .mode-btn {
             padding: 8px 24px;
             border-radius: 60px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(255, 255, 255, 0.04);
-            color: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(144, 202, 249, 0.25);
+            background: rgba(227, 242, 253, 0.05);
+            color: rgba(227, 242, 253, 0.6);
             font-weight: 600;
             font-size: 16px;
             cursor: pointer;
@@ -108,15 +244,15 @@
         }
 
         .mode-btn:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(144, 202, 249, 0.15);
+            border-color: rgba(144, 202, 249, 0.5);
         }
 
         .mode-btn.active {
-            background: rgba(79, 172, 254, 0.25);
-            border-color: #4facfe;
-            color: #fff;
-            box-shadow: 0 0 20px rgba(79, 172, 254, 0.15);
+            background: rgba(33, 150, 243, 0.25);
+            border-color: #2196F3;
+            color: #E3F2FD;
+            box-shadow: 0 0 20px rgba(33, 150, 243, 0.15);
         }
 
         /* ---------- Size selector ---------- */
@@ -131,9 +267,9 @@
         .size-btn {
             padding: 6px 18px;
             border-radius: 60px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(255, 255, 255, 0.04);
-            color: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(144, 202, 249, 0.2);
+            background: rgba(227, 242, 253, 0.04);
+            color: rgba(227, 242, 253, 0.6);
             font-weight: 600;
             font-size: 15px;
             cursor: pointer;
@@ -141,15 +277,15 @@
         }
 
         .size-btn:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(144, 202, 249, 0.1);
+            border-color: rgba(144, 202, 249, 0.4);
         }
 
         .size-btn.active {
-            background: rgba(79, 172, 254, 0.25);
-            border-color: #4facfe;
-            color: #fff;
-            box-shadow: 0 0 20px rgba(79, 172, 254, 0.15);
+            background: rgba(33, 150, 243, 0.2);
+            border-color: #2196F3;
+            color: #E3F2FD;
+            box-shadow: 0 0 20px rgba(33, 150, 243, 0.1);
         }
 
         /* ---------- Proceed button ---------- */
@@ -159,21 +295,21 @@
         }
 
         .btn-proceed {
-            background: linear-gradient(135deg, #f093fb, #f5576c);
+            background: linear-gradient(135deg, #2196F3, #0D47A1);
             border: none;
             padding: 12px 48px;
             border-radius: 60px;
             font-size: 18px;
             font-weight: 700;
-            color: #fff;
+            color: #E3F2FD;
             cursor: pointer;
-            box-shadow: 0 4px 20px rgba(245, 87, 108, 0.3);
+            box-shadow: 0 4px 20px rgba(33, 150, 243, 0.3);
             transition: transform 0.15s, box-shadow 0.2s;
         }
 
         .btn-proceed:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(245, 87, 108, 0.5);
+            box-shadow: 0 8px 30px rgba(33, 150, 243, 0.5);
         }
 
         .btn-proceed:active {
@@ -186,7 +322,7 @@
             margin-bottom: 24px;
             font-size: 18px;
             font-weight: 600;
-            color: rgba(255, 255, 255, 0.55);
+            color: rgba(227, 242, 253, 0.6);
             letter-spacing: 0.5px;
         }
 
@@ -196,11 +332,10 @@
         }
 
         .turn-indicator .highlight.x-turn {
-            color: #4facfe;
+            color: #2196F3;
         }
-
         .turn-indicator .highlight.o-turn {
-            color: #f5576c;
+            color: #90CAF9;
         }
 
         /* ---------- Board ---------- */
@@ -212,35 +347,29 @@
         }
 
         .cell {
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(227, 242, 253, 0.05);
             border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(144, 202, 249, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
             cursor: pointer;
             transition: background 0.2s, transform 0.12s, box-shadow 0.2s;
-            color: #fff;
-            box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.2);
+            color: #E3F2FD;
+            box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.4);
             position: relative;
             aspect-ratio: 1 / 1;
             font-size: 2.5rem;
         }
 
-        .board.size-3 .cell {
-            font-size: 4rem;
-        }
-        .board.size-5 .cell {
-            font-size: 2.4rem;
-        }
-        .board.size-7 .cell {
-            font-size: 1.6rem;
-        }
+        .board.size-3 .cell { font-size: 4rem; }
+        .board.size-5 .cell { font-size: 2.4rem; }
+        .board.size-7 .cell { font-size: 1.6rem; }
 
         .cell:hover:not(.taken):not(.game-over) {
-            background: rgba(255, 255, 255, 0.10);
-            border-color: rgba(255, 255, 255, 0.18);
+            background: rgba(144, 202, 249, 0.12);
+            border-color: rgba(144, 202, 249, 0.25);
             transform: scale(1.02);
         }
 
@@ -253,57 +382,56 @@
         }
 
         .cell.x-mark {
-            color: #4facfe;
-            text-shadow: 0 0 20px rgba(79, 172, 254, 0.35);
+            color: #2196F3;
+            text-shadow: 0 0 20px rgba(33, 150, 243, 0.35);
         }
 
         .cell.o-mark {
-            color: #f5576c;
-            text-shadow: 0 0 20px rgba(245, 87, 108, 0.35);
+            color: #90CAF9;
+            text-shadow: 0 0 20px rgba(144, 202, 249, 0.35);
         }
 
         .cell.win-cell {
             animation: winPulse 1s ease-in-out infinite alternate;
-            border-color: rgba(255, 215, 0, 0.5);
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+            border-color: rgba(33, 150, 243, 0.6);
+            box-shadow: 0 0 30px rgba(33, 150, 243, 0.2);
         }
 
         .cell.win-cell.x-mark {
-            color: #ffd700;
-            text-shadow: 0 0 40px rgba(255, 215, 0, 0.5);
+            color: #E3F2FD;
+            text-shadow: 0 0 40px rgba(33, 150, 243, 0.6);
         }
-
         .cell.win-cell.o-mark {
-            color: #ffd700;
-            text-shadow: 0 0 40px rgba(255, 215, 0, 0.5);
+            color: #E3F2FD;
+            text-shadow: 0 0 40px rgba(144, 202, 249, 0.6);
         }
 
         @keyframes winPulse {
-            0% {
-                transform: scale(1);
-            }
-            100% {
-                transform: scale(1.04);
-            }
+            0% { transform: scale(1); }
+            100% { transform: scale(1.04); }
         }
 
+        /* ---------- Status ---------- */
         .status {
             text-align: center;
             font-size: 18px;
             font-weight: 500;
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(227, 242, 253, 0.6);
             min-height: 32px;
             margin-bottom: 20px;
             transition: color 0.3s;
         }
 
         .status.win {
-            color: #ffd700;
+            color: #E3F2FD;
+            text-shadow: 0 0 20px rgba(33, 150, 243, 0.3);
         }
         .status.draw {
-            color: #a78bfa;
+            color: #90CAF9;
+            text-shadow: 0 0 20px rgba(144, 202, 249, 0.3);
         }
 
+        /* ---------- Buttons ---------- */
         .actions {
             display: flex;
             gap: 14px;
@@ -319,9 +447,9 @@
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
-            background: rgba(255, 255, 255, 0.06);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(227, 242, 253, 0.06);
+            color: #E3F2FD;
+            border: 1px solid rgba(144, 202, 249, 0.12);
             letter-spacing: 0.3px;
             flex: 1;
             min-width: 110px;
@@ -329,52 +457,48 @@
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
         }
         .btn:active {
             transform: translateY(0px) scale(0.96);
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #4facfe, #00c6fb);
+            background: linear-gradient(135deg, #2196F3, #0D47A1);
             border-color: transparent;
-            color: #fff;
-            box-shadow: 0 4px 16px rgba(79, 172, 254, 0.3);
+            color: #E3F2FD;
+            box-shadow: 0 4px 16px rgba(33, 150, 243, 0.3);
         }
-
         .btn-primary:hover {
-            box-shadow: 0 8px 28px rgba(79, 172, 254, 0.45);
+            box-shadow: 0 8px 28px rgba(33, 150, 243, 0.5);
         }
 
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.04);
-            border-color: rgba(255, 255, 255, 0.10);
+            background: rgba(227, 242, 253, 0.04);
+            border-color: rgba(144, 202, 249, 0.15);
         }
-
         .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.10);
+            background: rgba(144, 202, 249, 0.1);
         }
 
         .btn-success {
-            background: linear-gradient(135deg, #56ab2f, #a8e063);
+            background: linear-gradient(135deg, #90CAF9, #2196F3);
             border-color: transparent;
-            color: #fff;
-            box-shadow: 0 4px 16px rgba(86, 171, 47, 0.3);
+            color: #0D47A1;
+            box-shadow: 0 4px 16px rgba(144, 202, 249, 0.3);
         }
-
         .btn-success:hover {
-            box-shadow: 0 8px 28px rgba(86, 171, 47, 0.45);
+            box-shadow: 0 8px 28px rgba(144, 202, 249, 0.5);
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, #f093fb, #f5576c);
+            background: linear-gradient(135deg, #E3F2FD, #90CAF9);
             border-color: transparent;
-            color: #fff;
-            box-shadow: 0 4px 16px rgba(245, 87, 108, 0.3);
+            color: #0D47A1;
+            box-shadow: 0 4px 16px rgba(227, 242, 253, 0.2);
         }
-
         .btn-danger:hover {
-            box-shadow: 0 8px 28px rgba(245, 87, 108, 0.45);
+            box-shadow: 0 8px 28px rgba(227, 242, 253, 0.4);
         }
 
         /* ---------- Lobby ---------- */
@@ -390,9 +514,9 @@
         .lobby input {
             padding: 12px 18px;
             border-radius: 60px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(255, 255, 255, 0.04);
-            color: #fff;
+            border: 1px solid rgba(144, 202, 249, 0.2);
+            background: rgba(227, 242, 253, 0.04);
+            color: #E3F2FD;
             font-size: 16px;
             width: 200px;
             margin: 8px 0;
@@ -400,21 +524,21 @@
         }
 
         .lobby input::placeholder {
-            color: rgba(255, 255, 255, 0.3);
+            color: rgba(227, 242, 253, 0.3);
         }
         .lobby input:focus {
-            border-color: #4facfe;
+            border-color: #2196F3;
         }
 
         .lobby .room-id-display {
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(13, 71, 161, 0.3);
             padding: 12px 20px;
             border-radius: 60px;
             display: inline-block;
             margin: 12px 0;
             font-size: 20px;
             font-weight: 600;
-            color: #4facfe;
+            color: #90CAF9;
             word-break: break-all;
         }
 
@@ -422,9 +546,12 @@
             display: none;
         }
 
-        /* ---------- Online section (hidden by default) ---------- */
         #onlineSection {
             display: none;
+        }
+
+        .online-back-wrapper {
+            margin-top: 16px;
         }
 
         /* ---------- Responsive ---------- */
@@ -434,39 +561,25 @@
                 border-radius: 32px;
                 margin: 16px;
             }
-            .title {
-                font-size: 22px;
-            }
+            .title { font-size: 22px; }
             .scoreboard {
                 padding: 6px 14px;
                 gap: 12px;
             }
-            .score-item {
-                font-size: 13px;
-            }
+            .score-item { font-size: 13px; }
             .score-item span {
                 font-size: 16px;
                 min-width: 18px;
             }
-            .board {
-                gap: 6px;
-            }
-            .board.size-3 .cell {
-                font-size: 3rem;
-            }
-            .board.size-5 .cell {
-                font-size: 1.8rem;
-            }
-            .board.size-7 .cell {
-                font-size: 1.2rem;
-            }
+            .board { gap: 6px; }
+            .board.size-3 .cell { font-size: 3rem; }
+            .board.size-5 .cell { font-size: 1.8rem; }
+            .board.size-7 .cell { font-size: 1.2rem; }
             .turn-indicator {
                 font-size: 16px;
                 margin-bottom: 18px;
             }
-            .turn-indicator .highlight {
-                font-size: 18px;
-            }
+            .turn-indicator .highlight { font-size: 18px; }
             .status {
                 font-size: 16px;
                 min-height: 28px;
@@ -477,46 +590,143 @@
                 font-size: 14px;
                 min-width: 80px;
             }
-            .lobby input {
-                width: 160px;
-                font-size: 14px;
-            }
-            .size-btn {
-                font-size: 13px;
-                padding: 4px 14px;
-            }
-            .btn-proceed {
-                padding: 10px 30px;
-                font-size: 16px;
-            }
+            .lobby input { width: 160px; font-size: 14px; }
+            .size-btn { font-size: 13px; padding: 4px 14px; }
+            .btn-proceed { padding: 10px 30px; font-size: 16px; }
         }
 
         @media (max-width: 380px) {
-            .board.size-3 .cell {
-                font-size: 2.4rem;
-            }
-            .board.size-5 .cell {
-                font-size: 1.4rem;
-            }
-            .board.size-7 .cell {
-                font-size: 1rem;
-            }
-            .game-container {
-                padding: 16px 12px 20px;
-            }
+            .board.size-3 .cell { font-size: 2.4rem; }
+            .board.size-5 .cell { font-size: 1.4rem; }
+            .board.size-7 .cell { font-size: 1rem; }
+            .game-container { padding: 16px 12px 20px; }
             .header {
                 flex-direction: column;
                 gap: 12px;
                 align-items: stretch;
                 text-align: center;
             }
-            .scoreboard {
-                justify-content: center;
-            }
+            .scoreboard { justify-content: center; }
         }
     </style>
 </head>
 <body>
+
+    <!-- ===== MATRIX BACKGROUND ===== -->
+    <div class="matrix-container">
+        <div class="matrix-pattern">
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+        </div>
+        <div class="matrix-pattern">
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+        </div>
+        <div class="matrix-pattern">
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+        </div>
+        <div class="matrix-pattern">
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+        </div>
+        <div class="matrix-pattern">
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+            <div class="matrix-column"></div><div class="matrix-column"></div>
+        </div>
+    </div>
+
+    <!-- ===== GAME CONTAINER ===== -->
     <div class="game-container">
         <!-- Header -->
         <div class="header">
@@ -535,43 +745,42 @@
 
         <!-- Lobby -->
         <div id="lobby" class="lobby">
-            <!-- Mode selector -->
             <div class="mode-selector" id="modeSelector">
-                <span style="color: rgba(255,255,255,0.6); margin-right: 12px;">Mode:</span>
+                <span style="color: rgba(227,242,253,0.6); margin-right: 12px;">Mode:</span>
                 <button id="offlineModeBtn" class="mode-btn active">📱 Offline</button>
                 <button id="onlineModeBtn" class="mode-btn">🌐 Online</button>
             </div>
 
-            <!-- Size selector -->
             <div class="size-selector" id="sizeSelector">
-                <span style="color: rgba(255,255,255,0.6); margin-right: 12px;">Board:</span>
+                <span style="color: rgba(227,242,253,0.6); margin-right: 12px;">Board:</span>
                 <button class="size-btn active" data-size="3">3×3</button>
                 <button class="size-btn" data-size="5">5×5</button>
                 <button class="size-btn" data-size="7">7×7</button>
             </div>
 
-            <!-- Proceed button -->
             <div class="proceed-wrapper">
                 <button id="proceedBtn" class="btn-proceed">▶ Proceed</button>
             </div>
 
-            <!-- Online section (hidden until Proceed + online mode) -->
             <div id="onlineSection">
-                <h3 style="color: rgba(255,255,255,0.7); font-weight: 400; margin: 16px 0 12px;">Multiplayer</h3>
+                <h3 style="color: rgba(227,242,253,0.7); font-weight: 400; margin: 16px 0 12px;">Multiplayer</h3>
                 <div id="hostSection">
                     <button id="hostBtn" class="btn btn-primary">🎮 Host Game</button>
                     <div id="hostIdDisplay" style="margin-top: 10px; display: none;">
-                        <div style="color: rgba(255,255,255,0.5);">Your room ID:</div>
+                        <div style="color: rgba(227,242,253,0.5);">Your room ID:</div>
                         <div class="room-id-display" id="roomIdText">-----</div>
                         <button id="copyIdBtn" class="btn btn-secondary" style="padding: 6px 16px; font-size:14px; margin-top: 4px;">📋 Copy</button>
                     </div>
                 </div>
-                <div style="margin: 16px 0; color: rgba(255,255,255,0.2);">— or —</div>
+                <div style="margin: 16px 0; color: rgba(227,242,253,0.2);">— or —</div>
                 <div id="joinSection">
                     <input type="text" id="joinInput" placeholder="Paste room ID" />
                     <button id="joinBtn" class="btn btn-success">Join Game</button>
                 </div>
-                <div id="connectionStatus" style="margin-top: 12px; font-weight: 500; color: rgba(255,255,255,0.5);"></div>
+                <div id="connectionStatus" style="margin-top: 12px; font-weight: 500; color: rgba(227,242,253,0.5);"></div>
+                <div class="online-back-wrapper">
+                    <button id="onlineBackBtn" class="btn btn-secondary" style="width: 100%;">← Back</button>
+                </div>
             </div>
         </div>
 
@@ -591,8 +800,8 @@
     </div>
 
     <script>
+        // ---------- The full game logic (unchanged, but included for completeness) ----------
         (function() {
-            // ---------- State ----------
             const state = {
                 board: [],
                 size: 3,
@@ -601,17 +810,14 @@
                 winner: null,
                 winCombo: null,
                 scores: { X: 0, O: 0 },
-                mode: 'offline', // 'offline' or 'online'
+                mode: 'offline',
                 peer: null,
                 conn: null,
                 isHost: false,
                 myPlayerMark: null,
                 connected: false,
-                // UI state: lobby visible? game visible? online section visible?
-                // We'll control via hiding/showing elements.
             };
 
-            // DOM refs
             const boardEl = document.getElementById('board');
             const statusEl = document.getElementById('status');
             const turnIndicator = document.getElementById('turnIndicator');
@@ -634,18 +840,17 @@
             const offlineModeBtn = document.getElementById('offlineModeBtn');
             const onlineModeBtn = document.getElementById('onlineModeBtn');
             const proceedBtn = document.getElementById('proceedBtn');
+            const onlineBackBtn = document.getElementById('onlineBackBtn');
             const modeSelector = document.getElementById('modeSelector');
             const sizeSelector = document.getElementById('sizeSelector');
 
             const sizeBtns = document.querySelectorAll('.size-btn');
 
-            // ---------- Board size ----------
             function setBoardSize(size) {
                 state.size = size;
                 sizeBtns.forEach(btn => {
                     btn.classList.toggle('active', parseInt(btn.dataset.size) === size);
                 });
-                // If game is active (not hidden) and offline, reset board to new size
                 if (state.mode === 'offline' && !gameArea.classList.contains('hidden')) {
                     resetGameLocally();
                 }
@@ -658,7 +863,6 @@
                 });
             });
 
-            // ---------- Render ----------
             function renderBoard() {
                 const size = state.size;
                 boardEl.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
@@ -724,11 +928,9 @@
                 renderBoard();
             }
 
-            // ---------- Win detection ----------
             function checkGameState() {
                 const size = state.size;
                 const board = state.board;
-
                 function checkLine(r, c, dr, dc) {
                     const first = board[r * size + c];
                     if (!first) return null;
@@ -762,7 +964,6 @@
                 return null;
             }
 
-            // ---------- Game actions ----------
             function resetGameLocally() {
                 const size = state.size;
                 state.board = Array(size * size).fill(null);
@@ -837,29 +1038,23 @@
                 updateUI();
             }
 
-            // ---------- Mode switching (just updates the active button) ----------
             function setMode(mode) {
                 if (mode === state.mode) return;
                 state.mode = mode;
                 offlineModeBtn.classList.toggle('active', mode === 'offline');
                 onlineModeBtn.classList.toggle('active', mode === 'online');
-                // Hide online section if switching to offline
                 if (mode === 'offline') {
                     onlineSection.style.display = 'none';
                 }
-                // If we are already in the lobby and online, we might want to hide online section until proceed
             }
 
             offlineModeBtn.addEventListener('click', () => setMode('offline'));
             onlineModeBtn.addEventListener('click', () => setMode('online'));
 
-            // ---------- Proceed button ----------
             function proceed() {
                 if (state.mode === 'offline') {
-                    // Start offline game
                     lobby.classList.add('hidden');
                     gameArea.classList.remove('hidden');
-                    // Reset board and scores
                     state.board = Array(state.size * state.size).fill(null);
                     state.scores = { X: 0, O: 0 };
                     state.currentPlayer = 'X';
@@ -869,12 +1064,10 @@
                     updateUI();
                     connectionStatus.textContent = 'Offline mode – pass the device to your opponent.';
                 } else {
-                    // Online mode: show host/join section, hide mode and size selectors
                     modeSelector.style.display = 'none';
                     sizeSelector.style.display = 'none';
                     proceedBtn.style.display = 'none';
                     onlineSection.style.display = 'block';
-                    // Reset any previous connection
                     if (state.conn) {
                         state.conn.close();
                         state.conn = null;
@@ -893,16 +1086,36 @@
 
             proceedBtn.addEventListener('click', proceed);
 
-            // ---------- Back to lobby (from game) ----------
+            function backFromOnline() {
+                onlineSection.style.display = 'none';
+                modeSelector.style.display = 'flex';
+                sizeSelector.style.display = 'flex';
+                proceedBtn.style.display = 'inline-block';
+                if (state.conn) {
+                    state.conn.close();
+                    state.conn = null;
+                    state.connected = false;
+                }
+                if (state.peer) {
+                    state.peer.destroy();
+                    state.peer = null;
+                }
+                hostIdDisplay.style.display = 'none';
+                hostBtn.disabled = false;
+                hostBtn.textContent = '🎮 Host Game';
+                connectionStatus.textContent = 'Select mode and board, then click Proceed.';
+                offlineModeBtn.classList.toggle('active', state.mode === 'offline');
+                onlineModeBtn.classList.toggle('active', state.mode === 'online');
+            }
+
+            onlineBackBtn.addEventListener('click', backFromOnline);
+
             function goBackToLobby() {
-                // If online, disconnect
                 if (state.mode === 'online') {
                     disconnectOnline();
                 }
-                // Show lobby, hide game
                 lobby.classList.remove('hidden');
                 gameArea.classList.add('hidden');
-                // Reset state (optional)
                 state.board = Array(state.size * state.size).fill(null);
                 state.scores = { X: 0, O: 0 };
                 state.currentPlayer = 'X';
@@ -910,24 +1123,20 @@
                 state.winner = null;
                 state.winCombo = null;
                 updateUI();
-                // Show all lobby elements
                 modeSelector.style.display = 'flex';
                 sizeSelector.style.display = 'flex';
                 proceedBtn.style.display = 'inline-block';
                 onlineSection.style.display = 'none';
-                // Reset online UI
                 hostIdDisplay.style.display = 'none';
                 hostBtn.disabled = false;
                 hostBtn.textContent = '🎮 Host Game';
-                connectionStatus.textContent = '';
-                // Ensure mode buttons reflect current mode
+                connectionStatus.textContent = 'Select mode and board, then click Proceed.';
                 offlineModeBtn.classList.toggle('active', state.mode === 'offline');
                 onlineModeBtn.classList.toggle('active', state.mode === 'online');
             }
 
             backBtn.addEventListener('click', goBackToLobby);
 
-            // ---------- PeerJS (online) ----------
             function setupPeer() {
                 state.peer = new Peer(undefined, {
                     debug: 2,
@@ -942,10 +1151,7 @@
                     }
                 });
 
-                state.peer.on('open', (id) => {
-                    console.log('My peer ID:', id);
-                });
-
+                state.peer.on('open', (id) => console.log('My peer ID:', id));
                 state.peer.on('connection', (conn) => {
                     if (state.conn) {
                         conn.close();
@@ -956,7 +1162,6 @@
                     state.myPlayerMark = 'X';
                     setupConnection(conn);
                 });
-
                 state.peer.on('error', (err) => {
                     console.error(err);
                     connectionStatus.textContent = 'Error: ' + err.message;
@@ -1029,9 +1234,7 @@
             }
 
             function hostGame() {
-                if (state.peer) {
-                    state.peer.destroy();
-                }
+                if (state.peer) state.peer.destroy();
                 setupPeer();
                 state.isHost = true;
                 state.peer.on('open', (id) => {
@@ -1061,15 +1264,11 @@
                     connectionStatus.textContent = 'Please enter a room ID.';
                     return;
                 }
-                if (!state.peer) {
-                    setupPeer();
-                }
+                if (!state.peer) setupPeer();
                 if (state.peer.id) {
                     connectToPeer(remoteId);
                 } else {
-                    state.peer.on('open', () => {
-                        connectToPeer(remoteId);
-                    });
+                    state.peer.on('open', () => connectToPeer(remoteId));
                 }
             }
 
@@ -1086,9 +1285,7 @@
                     state.conn.send({ type: 'disconnect' });
                     state.conn.close();
                 }
-                if (state.peer) {
-                    state.peer.destroy();
-                }
+                if (state.peer) state.peer.destroy();
                 state.connected = false;
                 state.conn = null;
                 state.peer = null;
@@ -1128,7 +1325,6 @@
             state.board = Array(9).fill(null);
             state.scores = { X: 0, O: 0 };
             state.currentPlayer = 'X';
-            // Start with lobby visible, game hidden
             lobby.classList.remove('hidden');
             gameArea.classList.add('hidden');
             updateUI();
@@ -1139,9 +1335,7 @@
                     state.conn.send({ type: 'disconnect' });
                     state.conn.close();
                 }
-                if (state.peer) {
-                    state.peer.destroy();
-                }
+                if (state.peer) state.peer.destroy();
             });
         })();
     </script>

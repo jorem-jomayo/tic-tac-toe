@@ -4,9 +4,480 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tic Tac Toe – Offline & Online</title>
-    <!-- PeerJS library for WebRTC (only needed for online) -->
     <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
-    <link rel="stylesheet" href="style.css" />
+    <style>
+        /* ---------- Reset & Base ---------- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(145deg, #0f0c29, #302b63, #24243e);
+            user-select: none;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 48px;
+            padding: 40px 44px 48px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            width: 100%;
+            max-width: 540px;
+            transition: all 0.2s;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #f093fb, #f5576c, #4facfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .scoreboard {
+            display: flex;
+            gap: 16px;
+            background: rgba(0, 0, 0, 0.35);
+            padding: 8px 18px;
+            border-radius: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .score-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        .score-item span {
+            color: #fff;
+            font-weight: 700;
+            font-size: 18px;
+            min-width: 22px;
+            text-align: center;
+        }
+
+        .score-item .x-color {
+            color: #4facfe;
+        }
+        .score-item .o-color {
+            color: #f5576c;
+        }
+
+        /* ---------- Mode selector ---------- */
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .mode-btn {
+            padding: 8px 24px;
+            border-radius: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .mode-btn.active {
+            background: rgba(79, 172, 254, 0.25);
+            border-color: #4facfe;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(79, 172, 254, 0.15);
+        }
+
+        /* ---------- Size selector ---------- */
+        .size-selector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin: 16px 0 20px;
+        }
+
+        .size-btn {
+            padding: 6px 18px;
+            border-radius: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .size-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .size-btn.active {
+            background: rgba(79, 172, 254, 0.25);
+            border-color: #4facfe;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(79, 172, 254, 0.15);
+        }
+
+        /* ---------- Turn indicator ---------- */
+        .turn-indicator {
+            text-align: center;
+            margin-bottom: 24px;
+            font-size: 18px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.55);
+            letter-spacing: 0.5px;
+        }
+
+        .turn-indicator .highlight {
+            font-weight: 700;
+            font-size: 22px;
+        }
+
+        .turn-indicator .highlight.x-turn {
+            color: #4facfe;
+        }
+
+        .turn-indicator .highlight.o-turn {
+            color: #f5576c;
+        }
+
+        /* ---------- Board ---------- */
+        .board {
+            display: grid;
+            gap: 8px;
+            aspect-ratio: 1 / 1;
+            margin-bottom: 28px;
+        }
+
+        .cell {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.12s, box-shadow 0.2s;
+            color: #fff;
+            box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.2);
+            position: relative;
+            aspect-ratio: 1 / 1;
+            font-size: 2.5rem;
+        }
+
+        .board.size-3 .cell {
+            font-size: 4rem;
+        }
+        .board.size-5 .cell {
+            font-size: 2.4rem;
+        }
+        .board.size-7 .cell {
+            font-size: 1.6rem;
+        }
+
+        .cell:hover:not(.taken):not(.game-over) {
+            background: rgba(255, 255, 255, 0.10);
+            border-color: rgba(255, 255, 255, 0.18);
+            transform: scale(1.02);
+        }
+
+        .cell:active:not(.taken):not(.game-over) {
+            transform: scale(0.94);
+        }
+
+        .cell.taken {
+            cursor: default;
+        }
+
+        .cell.x-mark {
+            color: #4facfe;
+            text-shadow: 0 0 20px rgba(79, 172, 254, 0.35);
+        }
+
+        .cell.o-mark {
+            color: #f5576c;
+            text-shadow: 0 0 20px rgba(245, 87, 108, 0.35);
+        }
+
+        .cell.win-cell {
+            animation: winPulse 1s ease-in-out infinite alternate;
+            border-color: rgba(255, 215, 0, 0.5);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+        }
+
+        .cell.win-cell.x-mark {
+            color: #ffd700;
+            text-shadow: 0 0 40px rgba(255, 215, 0, 0.5);
+        }
+
+        .cell.win-cell.o-mark {
+            color: #ffd700;
+            text-shadow: 0 0 40px rgba(255, 215, 0, 0.5);
+        }
+
+        @keyframes winPulse {
+            0% {
+                transform: scale(1);
+            }
+            100% {
+                transform: scale(1.04);
+            }
+        }
+
+        .status {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.6);
+            min-height: 32px;
+            margin-bottom: 20px;
+            transition: color 0.3s;
+        }
+
+        .status.win {
+            color: #ffd700;
+        }
+        .status.draw {
+            color: #a78bfa;
+        }
+
+        .actions {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 34px;
+            border: none;
+            border-radius: 60px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            letter-spacing: 0.3px;
+            flex: 1;
+            min-width: 110px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+        .btn:active {
+            transform: translateY(0px) scale(0.96);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe, #00c6fb);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(79, 172, 254, 0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 8px 28px rgba(79, 172, 254, 0.45);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.10);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.10);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f, #a8e063);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(86, 171, 47, 0.3);
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 8px 28px rgba(86, 171, 47, 0.45);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(245, 87, 108, 0.3);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 8px 28px rgba(245, 87, 108, 0.45);
+        }
+
+        /* ---------- Lobby ---------- */
+        .lobby {
+            text-align: center;
+            padding: 20px 0 10px;
+        }
+
+        .lobby.hidden {
+            display: none;
+        }
+
+        .lobby input {
+            padding: 12px 18px;
+            border-radius: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.04);
+            color: #fff;
+            font-size: 16px;
+            width: 200px;
+            margin: 8px 0;
+            outline: none;
+        }
+
+        .lobby input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+        .lobby input:focus {
+            border-color: #4facfe;
+        }
+
+        .lobby .room-id-display {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px 20px;
+            border-radius: 60px;
+            display: inline-block;
+            margin: 12px 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: #4facfe;
+            word-break: break-all;
+        }
+
+        .game-area.hidden {
+            display: none;
+        }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 520px) {
+            .game-container {
+                padding: 24px 20px 28px;
+                border-radius: 32px;
+                margin: 16px;
+            }
+            .title {
+                font-size: 22px;
+            }
+            .scoreboard {
+                padding: 6px 14px;
+                gap: 12px;
+            }
+            .score-item {
+                font-size: 13px;
+            }
+            .score-item span {
+                font-size: 16px;
+                min-width: 18px;
+            }
+            .board {
+                gap: 6px;
+            }
+            .board.size-3 .cell {
+                font-size: 3rem;
+            }
+            .board.size-5 .cell {
+                font-size: 1.8rem;
+            }
+            .board.size-7 .cell {
+                font-size: 1.2rem;
+            }
+            .turn-indicator {
+                font-size: 16px;
+                margin-bottom: 18px;
+            }
+            .turn-indicator .highlight {
+                font-size: 18px;
+            }
+            .status {
+                font-size: 16px;
+                min-height: 28px;
+                margin-bottom: 16px;
+            }
+            .btn {
+                padding: 10px 20px;
+                font-size: 14px;
+                min-width: 80px;
+            }
+            .lobby input {
+                width: 160px;
+                font-size: 14px;
+            }
+            .size-btn {
+                font-size: 13px;
+                padding: 4px 14px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .board.size-3 .cell {
+                font-size: 2.4rem;
+            }
+            .board.size-5 .cell {
+                font-size: 1.4rem;
+            }
+            .board.size-7 .cell {
+                font-size: 1rem;
+            }
+            .game-container {
+                padding: 16px 12px 20px;
+            }
+            .header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+                text-align: center;
+            }
+            .scoreboard {
+                justify-content: center;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="game-container">
@@ -33,6 +504,14 @@
                 <button id="onlineModeBtn" class="mode-btn">🌐 Online</button>
             </div>
 
+            <!-- Size selector (visible in both modes) -->
+            <div class="size-selector">
+                <span style="color: rgba(255,255,255,0.6); margin-right: 12px;">Board:</span>
+                <button class="size-btn active" data-size="3">3×3</button>
+                <button class="size-btn" data-size="5">5×5</button>
+                <button class="size-btn" data-size="7">7×7</button>
+            </div>
+
             <!-- Online section (hidden by default) -->
             <div id="onlineSection" style="display: none;">
                 <h3 style="color: rgba(255,255,255,0.7); font-weight: 400; margin: 16px 0 12px;">Multiplayer</h3>
@@ -53,7 +532,7 @@
             </div>
         </div>
 
-        <!-- Game Area (hidden until a mode is active) -->
+        <!-- Game Area -->
         <div id="gameArea" class="game-area hidden">
             <div class="turn-indicator" id="turnIndicator">
                 <span class="highlight x-turn" id="turnHighlight">✕</span>
@@ -68,6 +547,534 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        (function() {
+            // ---------- State ----------
+            const state = {
+                board: [],
+                size: 3,
+                currentPlayer: 'X',
+                gameOver: false,
+                winner: null,
+                winCombo: null,
+                scores: { X: 0, O: 0 },
+                mode: 'offline',
+                peer: null,
+                conn: null,
+                isHost: false,
+                myPlayerMark: null,
+                connected: false,
+            };
+
+            // DOM refs
+            const boardEl = document.getElementById('board');
+            const statusEl = document.getElementById('status');
+            const turnIndicator = document.getElementById('turnIndicator');
+            const turnHighlight = document.getElementById('turnHighlight');
+            const turnText = document.getElementById('turnText');
+            const scoreXEl = document.getElementById('scoreX');
+            const scoreOEl = document.getElementById('scoreO');
+            const resetBtn = document.getElementById('resetBtn');
+            const backBtn = document.getElementById('backBtn');
+            const lobby = document.getElementById('lobby');
+            const gameArea = document.getElementById('gameArea');
+            const hostBtn = document.getElementById('hostBtn');
+            const joinBtn = document.getElementById('joinBtn');
+            const joinInput = document.getElementById('joinInput');
+            const hostIdDisplay = document.getElementById('hostIdDisplay');
+            const roomIdText = document.getElementById('roomIdText');
+            const copyIdBtn = document.getElementById('copyIdBtn');
+            const connectionStatus = document.getElementById('connectionStatus');
+            const onlineSection = document.getElementById('onlineSection');
+            const offlineModeBtn = document.getElementById('offlineModeBtn');
+            const onlineModeBtn = document.getElementById('onlineModeBtn');
+
+            const sizeBtns = document.querySelectorAll('.size-btn');
+
+            // ---------- Board size ----------
+            function setBoardSize(size) {
+                state.size = size;
+                sizeBtns.forEach(btn => {
+                    btn.classList.toggle('active', parseInt(btn.dataset.size) === size);
+                });
+                if (state.mode === 'offline' && !gameArea.classList.contains('hidden')) {
+                    resetGameLocally();
+                }
+            }
+
+            sizeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (state.mode === 'online' && state.connected) return;
+                    setBoardSize(parseInt(btn.dataset.size));
+                });
+            });
+
+            // ---------- Render ----------
+            function renderBoard() {
+                const size = state.size;
+                boardEl.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+                boardEl.className = `board size-${size}`;
+                boardEl.innerHTML = '';
+                const total = size * size;
+                for (let i = 0; i < total; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.index = i;
+                    const mark = state.board[i];
+                    if (mark) {
+                        cell.textContent = mark === 'X' ? '✕' : '◯';
+                        cell.classList.add('taken', mark === 'X' ? 'x-mark' : 'o-mark');
+                    }
+                    if (state.winCombo && state.winCombo.includes(i)) {
+                        cell.classList.add('win-cell');
+                    }
+                    cell.addEventListener('click', () => handleCellClick(i));
+                    boardEl.appendChild(cell);
+                }
+            }
+
+            function updateUI() {
+                scoreXEl.textContent = state.scores.X;
+                scoreOEl.textContent = state.scores.O;
+
+                if (state.gameOver) {
+                    if (state.winner === 'X') {
+                        turnHighlight.textContent = '✕';
+                        turnHighlight.className = 'highlight x-turn';
+                        turnText.textContent = ' wins! 🎉';
+                    } else if (state.winner === 'O') {
+                        turnHighlight.textContent = '◯';
+                        turnHighlight.className = 'highlight o-turn';
+                        turnText.textContent = ' wins! 🎉';
+                    } else if (state.winner === 'draw') {
+                        turnHighlight.textContent = '—';
+                        turnHighlight.className = 'highlight';
+                        turnText.textContent = " It's a draw!";
+                    }
+                } else {
+                    turnHighlight.textContent = state.currentPlayer === 'X' ? '✕' : '◯';
+                    turnHighlight.className = `highlight ${state.currentPlayer === 'X' ? 'x-turn' : 'o-turn'}`;
+                    turnText.textContent = "'s turn";
+                }
+
+                if (state.gameOver) {
+                    if (state.winner === 'X') {
+                        statusEl.textContent = '✕ wins the game!';
+                        statusEl.className = 'status win';
+                    } else if (state.winner === 'O') {
+                        statusEl.textContent = '◯ wins the game!';
+                        statusEl.className = 'status win';
+                    } else if (state.winner === 'draw') {
+                        statusEl.textContent = 'The game ended in a draw.';
+                        statusEl.className = 'status draw';
+                    }
+                } else {
+                    statusEl.textContent = `Player ${state.currentPlayer === 'X' ? '✕' : '◯'}, make your move.`;
+                    statusEl.className = 'status';
+                }
+                renderBoard();
+            }
+
+            // ---------- Win detection ----------
+            function checkGameState() {
+                const size = state.size;
+                const board = state.board;
+
+                function checkLine(r, c, dr, dc) {
+                    const first = board[r * size + c];
+                    if (!first) return null;
+                    let indices = [];
+                    for (let i = 0; i < size; i++) {
+                        const nr = r + i * dr;
+                        const nc = c + i * dc;
+                        if (nr < 0 || nr >= size || nc < 0 || nc >= size) return null;
+                        if (board[nr * size + nc] !== first) return null;
+                        indices.push(nr * size + nc);
+                    }
+                    return { winner: first, indices };
+                }
+
+                for (let r = 0; r < size; r++) {
+                    const result = checkLine(r, 0, 0, 1);
+                    if (result) return result;
+                }
+                for (let c = 0; c < size; c++) {
+                    const result = checkLine(0, c, 1, 0);
+                    if (result) return result;
+                }
+                const diag1 = checkLine(0, 0, 1, 1);
+                if (diag1) return diag1;
+                const diag2 = checkLine(0, size - 1, 1, -1);
+                if (diag2) return diag2;
+
+                if (board.every(cell => cell !== null)) {
+                    return { winner: 'draw', indices: null };
+                }
+                return null;
+            }
+
+            // ---------- Game actions ----------
+            function resetGameLocally() {
+                const size = state.size;
+                state.board = Array(size * size).fill(null);
+                state.currentPlayer = 'X';
+                state.gameOver = false;
+                state.winner = null;
+                state.winCombo = null;
+                updateUI();
+                if (state.mode === 'online' && state.conn && state.conn.open) {
+                    state.conn.send({
+                        type: 'reset',
+                        size: state.size,
+                        board: state.board,
+                        currentPlayer: state.currentPlayer,
+                        gameOver: state.gameOver,
+                        winner: state.winner,
+                        winCombo: state.winCombo,
+                        scores: state.scores,
+                    });
+                }
+            }
+
+            function handleCellClick(index) {
+                if (state.gameOver) return;
+                if (state.board[index] !== null) return;
+                if (state.mode === 'online' && state.currentPlayer !== state.myPlayerMark) {
+                    statusEl.textContent = "Wait for your opponent!";
+                    return;
+                }
+
+                state.board[index] = state.currentPlayer;
+                const result = checkGameState();
+                if (result) {
+                    state.gameOver = true;
+                    state.winner = result.winner;
+                    state.winCombo = result.indices;
+                    if (result.winner !== 'draw') {
+                        state.scores[result.winner]++;
+                    }
+                } else {
+                    state.currentPlayer = state.currentPlayer === 'X' ? 'O' : 'X';
+                }
+                updateUI();
+
+                if (state.mode === 'online' && state.conn && state.conn.open) {
+                    state.conn.send({
+                        type: 'move',
+                        index: index,
+                        currentPlayer: state.currentPlayer,
+                        board: state.board,
+                        gameOver: state.gameOver,
+                        winner: state.winner,
+                        winCombo: state.winCombo,
+                        scores: state.scores,
+                        size: state.size,
+                    });
+                }
+            }
+
+            function applyRemoteState(data) {
+                state.size = data.size || 3;
+                state.board = data.board.slice();
+                state.currentPlayer = data.currentPlayer;
+                state.gameOver = data.gameOver;
+                state.winner = data.winner;
+                state.winCombo = data.winCombo ? data.winCombo.slice() : null;
+                state.scores = { X: data.scores.X, O: data.scores.O };
+                const expected = state.size * state.size;
+                if (state.board.length !== expected) {
+                    state.board = Array(expected).fill(null);
+                }
+                updateUI();
+            }
+
+            // ---------- Mode switching ----------
+            function setMode(mode) {
+                if (mode === state.mode) return;
+                if (state.mode === 'online') {
+                    disconnectOnline();
+                }
+                state.mode = mode;
+                offlineModeBtn.classList.toggle('active', mode === 'offline');
+                onlineModeBtn.classList.toggle('active', mode === 'online');
+
+                if (mode === 'offline') {
+                    onlineSection.style.display = 'none';
+                    lobby.classList.add('hidden');
+                    gameArea.classList.remove('hidden');
+                    state.board = Array(state.size * state.size).fill(null);
+                    state.scores = { X: 0, O: 0 };
+                    state.currentPlayer = 'X';
+                    state.gameOver = false;
+                    state.winner = null;
+                    state.winCombo = null;
+                    updateUI();
+                    connectionStatus.textContent = 'Offline mode – pass the device to your opponent.';
+                } else {
+                    lobby.classList.remove('hidden');
+                    gameArea.classList.add('hidden');
+                    onlineSection.style.display = 'block';
+                    state.connected = false;
+                    state.conn = null;
+                    state.peer = null;
+                    hostIdDisplay.style.display = 'none';
+                    hostBtn.disabled = false;
+                    hostBtn.textContent = '🎮 Host Game';
+                    connectionStatus.textContent = '';
+                }
+            }
+
+            // ---------- PeerJS (online) ----------
+            function setupPeer() {
+                state.peer = new Peer(undefined, {
+                    debug: 2,
+                    config: {
+                        iceServers: [
+                            { urls: 'stun:stun.l.google.com:19302' },
+                            { urls: 'stun:stun1.l.google.com:19302' },
+                            { urls: 'stun:stun2.l.google.com:19302' },
+                            { urls: 'stun:stun3.l.google.com:19302' },
+                            { urls: 'stun:stun4.l.google.com:19302' },
+                        ]
+                    }
+                });
+
+                state.peer.on('open', (id) => {
+                    console.log('My peer ID:', id);
+                });
+
+                state.peer.on('connection', (conn) => {
+                    if (state.conn) {
+                        conn.close();
+                        return;
+                    }
+                    state.conn = conn;
+                    state.isHost = true;
+                    state.myPlayerMark = 'X';
+                    setupConnection(conn);
+                });
+
+                state.peer.on('error', (err) => {
+                    console.error(err);
+                    connectionStatus.textContent = 'Error: ' + err.message;
+                });
+            }
+
+            function setupConnection(conn) {
+                conn.on('open', () => {
+                    state.connected = true;
+                    lobby.classList.add('hidden');
+                    gameArea.classList.remove('hidden');
+                    connectionStatus.textContent = 'Connected!';
+                    if (state.isHost) {
+                        state.currentPlayer = 'X';
+                        state.myPlayerMark = 'X';
+                        state.board = Array(state.size * state.size).fill(null);
+                        state.gameOver = false;
+                        state.winner = null;
+                        state.winCombo = null;
+                        updateUI();
+                        conn.send({
+                            type: 'sync',
+                            size: state.size,
+                            board: state.board,
+                            currentPlayer: state.currentPlayer,
+                            gameOver: state.gameOver,
+                            winner: state.winner,
+                            winCombo: state.winCombo,
+                            scores: state.scores,
+                        });
+                    } else {
+                        state.currentPlayer = 'X';
+                        state.myPlayerMark = 'O';
+                    }
+                    updateUI();
+                });
+
+                conn.on('data', (data) => {
+                    if (data.type === 'move') {
+                        applyRemoteState(data);
+                    } else if (data.type === 'reset') {
+                        state.board = Array(state.size * state.size).fill(null);
+                        state.currentPlayer = 'X';
+                        state.gameOver = false;
+                        state.winner = null;
+                        state.winCombo = null;
+                        updateUI();
+                    } else if (data.type === 'sync') {
+                        state.size = data.size || 3;
+                        applyRemoteState(data);
+                        state.myPlayerMark = 'O';
+                        updateUI();
+                    } else if (data.type === 'disconnect') {
+                        connectionStatus.textContent = 'Opponent disconnected.';
+                        state.connected = false;
+                        gameArea.classList.add('hidden');
+                        lobby.classList.remove('hidden');
+                        state.board = Array(state.size * state.size).fill(null);
+                        state.scores = { X: 0, O: 0 };
+                        updateUI();
+                    }
+                });
+
+                conn.on('close', () => {
+                    connectionStatus.textContent = 'Connection closed.';
+                    state.connected = false;
+                    gameArea.classList.add('hidden');
+                    lobby.classList.remove('hidden');
+                });
+
+                conn.on('error', (err) => {
+                    console.error('Connection error:', err);
+                    connectionStatus.textContent = 'Connection error.';
+                });
+            }
+
+            function hostGame() {
+                if (state.peer) {
+                    state.peer.destroy();
+                }
+                setupPeer();
+                state.isHost = true;
+                state.peer.on('open', (id) => {
+                    roomIdText.textContent = id;
+                    hostIdDisplay.style.display = 'block';
+                    connectionStatus.textContent = 'Share this ID with your opponent.';
+                });
+                if (state.peer.id) {
+                    roomIdText.textContent = state.peer.id;
+                    hostIdDisplay.style.display = 'block';
+                    connectionStatus.textContent = 'Share this ID with your opponent.';
+                }
+                hostBtn.disabled = true;
+                hostBtn.textContent = 'Waiting...';
+                const size = state.size;
+                state.board = Array(size * size).fill(null);
+                state.gameOver = false;
+                state.winner = null;
+                state.winCombo = null;
+                state.currentPlayer = 'X';
+                updateUI();
+            }
+
+            function joinGame() {
+                const remoteId = joinInput.value.trim();
+                if (!remoteId) {
+                    connectionStatus.textContent = 'Please enter a room ID.';
+                    return;
+                }
+                if (!state.peer) {
+                    setupPeer();
+                }
+                if (state.peer.id) {
+                    connectToPeer(remoteId);
+                } else {
+                    state.peer.on('open', () => {
+                        connectToPeer(remoteId);
+                    });
+                }
+            }
+
+            function connectToPeer(remoteId) {
+                const conn = state.peer.connect(remoteId);
+                state.isHost = false;
+                state.myPlayerMark = 'O';
+                setupConnection(conn);
+                connectionStatus.textContent = 'Connecting...';
+            }
+
+            function disconnectOnline() {
+                if (state.conn) {
+                    state.conn.send({ type: 'disconnect' });
+                    state.conn.close();
+                }
+                if (state.peer) {
+                    state.peer.destroy();
+                }
+                state.connected = false;
+                state.conn = null;
+                state.peer = null;
+                hostIdDisplay.style.display = 'none';
+                hostBtn.disabled = false;
+                hostBtn.textContent = '🎮 Host Game';
+                connectionStatus.textContent = 'Disconnected.';
+            }
+
+            // ---------- Back to lobby ----------
+            function goBackToLobby() {
+                if (state.mode === 'online') {
+                    disconnectOnline();
+                    state.board = Array(state.size * state.size).fill(null);
+                    state.scores = { X: 0, O: 0 };
+                    state.currentPlayer = 'X';
+                    state.gameOver = false;
+                    state.winner = null;
+                    state.winCombo = null;
+                    updateUI();
+                    lobby.classList.remove('hidden');
+                    gameArea.classList.add('hidden');
+                    onlineSection.style.display = 'block';
+                } else {
+                    lobby.classList.remove('hidden');
+                    gameArea.classList.add('hidden');
+                    state.board = Array(state.size * state.size).fill(null);
+                    state.scores = { X: 0, O: 0 };
+                    state.currentPlayer = 'X';
+                    state.gameOver = false;
+                    state.winner = null;
+                    state.winCombo = null;
+                    updateUI();
+                    connectionStatus.textContent = 'Offline mode – choose size and start a new game.';
+                }
+            }
+
+            // ---------- Event listeners ----------
+            offlineModeBtn.addEventListener('click', () => setMode('offline'));
+            onlineModeBtn.addEventListener('click', () => setMode('online'));
+
+            hostBtn.addEventListener('click', hostGame);
+            joinBtn.addEventListener('click', joinGame);
+            joinInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') joinGame(); });
+            copyIdBtn.addEventListener('click', () => {
+                const text = roomIdText.textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    connectionStatus.textContent = 'ID copied!';
+                }).catch(() => {
+                    const range = document.createRange();
+                    range.selectNode(roomIdText);
+                    window.getSelection().removeAllRanges();
+                    window.getSelection().addRange(range);
+                    document.execCommand('copy');
+                    connectionStatus.textContent = 'ID copied!';
+                });
+            });
+            resetBtn.addEventListener('click', resetGameLocally);
+            backBtn.addEventListener('click', goBackToLobby);
+
+            // ---------- Init ----------
+            state.mode = 'offline';
+            offlineModeBtn.classList.add('active');
+            onlineModeBtn.classList.remove('active');
+            onlineSection.style.display = 'none';
+            setBoardSize(3);
+            state.board = Array(9).fill(null);
+            state.scores = { X: 0, O: 0 };
+            state.currentPlayer = 'X';
+            lobby.classList.add('hidden');
+            gameArea.classList.remove('hidden');
+            updateUI();
+            connectionStatus.textContent = 'Offline mode – pass the device to your opponent.';
+
+            window.addEventListener('beforeunload', () => {
+                if (state.conn) {
+                    state.conn.send({ type: 'disconnect' });
+                    state.conn.close();
+                }
+                if (state.peer) {
+                    state.peer.destroy();
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

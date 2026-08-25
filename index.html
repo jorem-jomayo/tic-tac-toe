@@ -152,6 +152,34 @@
             box-shadow: 0 0 20px rgba(79, 172, 254, 0.15);
         }
 
+        /* ---------- Proceed button ---------- */
+        .proceed-wrapper {
+            text-align: center;
+            margin: 12px 0 16px;
+        }
+
+        .btn-proceed {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border: none;
+            padding: 12px 48px;
+            border-radius: 60px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(245, 87, 108, 0.3);
+            transition: transform 0.15s, box-shadow 0.2s;
+        }
+
+        .btn-proceed:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(245, 87, 108, 0.5);
+        }
+
+        .btn-proceed:active {
+            transform: scale(0.94);
+        }
+
         /* ---------- Turn indicator ---------- */
         .turn-indicator {
             text-align: center;
@@ -394,6 +422,11 @@
             display: none;
         }
 
+        /* ---------- Online section (hidden by default) ---------- */
+        #onlineSection {
+            display: none;
+        }
+
         /* ---------- Responsive ---------- */
         @media (max-width: 520px) {
             .game-container {
@@ -452,6 +485,10 @@
                 font-size: 13px;
                 padding: 4px 14px;
             }
+            .btn-proceed {
+                padding: 10px 30px;
+                font-size: 16px;
+            }
         }
 
         @media (max-width: 380px) {
@@ -496,24 +533,30 @@
             </div>
         </div>
 
-        <!-- Lobby with mode toggle -->
+        <!-- Lobby -->
         <div id="lobby" class="lobby">
-            <div class="mode-selector">
+            <!-- Mode selector -->
+            <div class="mode-selector" id="modeSelector">
                 <span style="color: rgba(255,255,255,0.6); margin-right: 12px;">Mode:</span>
                 <button id="offlineModeBtn" class="mode-btn active">📱 Offline</button>
                 <button id="onlineModeBtn" class="mode-btn">🌐 Online</button>
             </div>
 
-            <!-- Size selector (visible in both modes) -->
-            <div class="size-selector">
+            <!-- Size selector -->
+            <div class="size-selector" id="sizeSelector">
                 <span style="color: rgba(255,255,255,0.6); margin-right: 12px;">Board:</span>
                 <button class="size-btn active" data-size="3">3×3</button>
                 <button class="size-btn" data-size="5">5×5</button>
                 <button class="size-btn" data-size="7">7×7</button>
             </div>
 
-            <!-- Online section (hidden by default) -->
-            <div id="onlineSection" style="display: none;">
+            <!-- Proceed button -->
+            <div class="proceed-wrapper">
+                <button id="proceedBtn" class="btn-proceed">▶ Proceed</button>
+            </div>
+
+            <!-- Online section (hidden until Proceed + online mode) -->
+            <div id="onlineSection">
                 <h3 style="color: rgba(255,255,255,0.7); font-weight: 400; margin: 16px 0 12px;">Multiplayer</h3>
                 <div id="hostSection">
                     <button id="hostBtn" class="btn btn-primary">🎮 Host Game</button>
@@ -542,7 +585,7 @@
             <div class="status" id="status"></div>
             <div class="actions">
                 <button class="btn btn-secondary" id="resetBtn">↻ New Game</button>
-                <button class="btn btn-danger" id="backBtn">⟲ Back to Lobby</button>
+                <button class="btn btn-danger" id="backBtn">⟲ Back</button>
             </div>
         </div>
     </div>
@@ -558,12 +601,14 @@
                 winner: null,
                 winCombo: null,
                 scores: { X: 0, O: 0 },
-                mode: 'offline',
+                mode: 'offline', // 'offline' or 'online'
                 peer: null,
                 conn: null,
                 isHost: false,
                 myPlayerMark: null,
                 connected: false,
+                // UI state: lobby visible? game visible? online section visible?
+                // We'll control via hiding/showing elements.
             };
 
             // DOM refs
@@ -588,6 +633,9 @@
             const onlineSection = document.getElementById('onlineSection');
             const offlineModeBtn = document.getElementById('offlineModeBtn');
             const onlineModeBtn = document.getElementById('onlineModeBtn');
+            const proceedBtn = document.getElementById('proceedBtn');
+            const modeSelector = document.getElementById('modeSelector');
+            const sizeSelector = document.getElementById('sizeSelector');
 
             const sizeBtns = document.querySelectorAll('.size-btn');
 
@@ -597,6 +645,7 @@
                 sizeBtns.forEach(btn => {
                     btn.classList.toggle('active', parseInt(btn.dataset.size) === size);
                 });
+                // If game is active (not hidden) and offline, reset board to new size
                 if (state.mode === 'offline' && !gameArea.classList.contains('hidden')) {
                     resetGameLocally();
                 }
@@ -788,20 +837,29 @@
                 updateUI();
             }
 
-            // ---------- Mode switching ----------
+            // ---------- Mode switching (just updates the active button) ----------
             function setMode(mode) {
                 if (mode === state.mode) return;
-                if (state.mode === 'online') {
-                    disconnectOnline();
-                }
                 state.mode = mode;
                 offlineModeBtn.classList.toggle('active', mode === 'offline');
                 onlineModeBtn.classList.toggle('active', mode === 'online');
-
+                // Hide online section if switching to offline
                 if (mode === 'offline') {
                     onlineSection.style.display = 'none';
+                }
+                // If we are already in the lobby and online, we might want to hide online section until proceed
+            }
+
+            offlineModeBtn.addEventListener('click', () => setMode('offline'));
+            onlineModeBtn.addEventListener('click', () => setMode('online'));
+
+            // ---------- Proceed button ----------
+            function proceed() {
+                if (state.mode === 'offline') {
+                    // Start offline game
                     lobby.classList.add('hidden');
                     gameArea.classList.remove('hidden');
+                    // Reset board and scores
                     state.board = Array(state.size * state.size).fill(null);
                     state.scores = { X: 0, O: 0 };
                     state.currentPlayer = 'X';
@@ -811,18 +869,63 @@
                     updateUI();
                     connectionStatus.textContent = 'Offline mode – pass the device to your opponent.';
                 } else {
-                    lobby.classList.remove('hidden');
-                    gameArea.classList.add('hidden');
+                    // Online mode: show host/join section, hide mode and size selectors
+                    modeSelector.style.display = 'none';
+                    sizeSelector.style.display = 'none';
+                    proceedBtn.style.display = 'none';
                     onlineSection.style.display = 'block';
-                    state.connected = false;
-                    state.conn = null;
-                    state.peer = null;
+                    // Reset any previous connection
+                    if (state.conn) {
+                        state.conn.close();
+                        state.conn = null;
+                        state.connected = false;
+                    }
+                    if (state.peer) {
+                        state.peer.destroy();
+                        state.peer = null;
+                    }
                     hostIdDisplay.style.display = 'none';
                     hostBtn.disabled = false;
                     hostBtn.textContent = '🎮 Host Game';
-                    connectionStatus.textContent = '';
+                    connectionStatus.textContent = 'Choose Host or Join.';
                 }
             }
+
+            proceedBtn.addEventListener('click', proceed);
+
+            // ---------- Back to lobby (from game) ----------
+            function goBackToLobby() {
+                // If online, disconnect
+                if (state.mode === 'online') {
+                    disconnectOnline();
+                }
+                // Show lobby, hide game
+                lobby.classList.remove('hidden');
+                gameArea.classList.add('hidden');
+                // Reset state (optional)
+                state.board = Array(state.size * state.size).fill(null);
+                state.scores = { X: 0, O: 0 };
+                state.currentPlayer = 'X';
+                state.gameOver = false;
+                state.winner = null;
+                state.winCombo = null;
+                updateUI();
+                // Show all lobby elements
+                modeSelector.style.display = 'flex';
+                sizeSelector.style.display = 'flex';
+                proceedBtn.style.display = 'inline-block';
+                onlineSection.style.display = 'none';
+                // Reset online UI
+                hostIdDisplay.style.display = 'none';
+                hostBtn.disabled = false;
+                hostBtn.textContent = '🎮 Host Game';
+                connectionStatus.textContent = '';
+                // Ensure mode buttons reflect current mode
+                offlineModeBtn.classList.toggle('active', state.mode === 'offline');
+                onlineModeBtn.classList.toggle('active', state.mode === 'online');
+            }
+
+            backBtn.addEventListener('click', goBackToLobby);
 
             // ---------- PeerJS (online) ----------
             function setupPeer() {
@@ -909,19 +1012,14 @@
                     } else if (data.type === 'disconnect') {
                         connectionStatus.textContent = 'Opponent disconnected.';
                         state.connected = false;
-                        gameArea.classList.add('hidden');
-                        lobby.classList.remove('hidden');
-                        state.board = Array(state.size * state.size).fill(null);
-                        state.scores = { X: 0, O: 0 };
-                        updateUI();
+                        goBackToLobby();
                     }
                 });
 
                 conn.on('close', () => {
                     connectionStatus.textContent = 'Connection closed.';
                     state.connected = false;
-                    gameArea.classList.add('hidden');
-                    lobby.classList.remove('hidden');
+                    goBackToLobby();
                 });
 
                 conn.on('error', (err) => {
@@ -1000,38 +1098,6 @@
                 connectionStatus.textContent = 'Disconnected.';
             }
 
-            // ---------- Back to lobby ----------
-            function goBackToLobby() {
-                if (state.mode === 'online') {
-                    disconnectOnline();
-                    state.board = Array(state.size * state.size).fill(null);
-                    state.scores = { X: 0, O: 0 };
-                    state.currentPlayer = 'X';
-                    state.gameOver = false;
-                    state.winner = null;
-                    state.winCombo = null;
-                    updateUI();
-                    lobby.classList.remove('hidden');
-                    gameArea.classList.add('hidden');
-                    onlineSection.style.display = 'block';
-                } else {
-                    lobby.classList.remove('hidden');
-                    gameArea.classList.add('hidden');
-                    state.board = Array(state.size * state.size).fill(null);
-                    state.scores = { X: 0, O: 0 };
-                    state.currentPlayer = 'X';
-                    state.gameOver = false;
-                    state.winner = null;
-                    state.winCombo = null;
-                    updateUI();
-                    connectionStatus.textContent = 'Offline mode – choose size and start a new game.';
-                }
-            }
-
-            // ---------- Event listeners ----------
-            offlineModeBtn.addEventListener('click', () => setMode('offline'));
-            onlineModeBtn.addEventListener('click', () => setMode('online'));
-
             hostBtn.addEventListener('click', hostGame);
             joinBtn.addEventListener('click', joinGame);
             joinInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') joinGame(); });
@@ -1049,21 +1115,24 @@
                 });
             });
             resetBtn.addEventListener('click', resetGameLocally);
-            backBtn.addEventListener('click', goBackToLobby);
 
             // ---------- Init ----------
             state.mode = 'offline';
             offlineModeBtn.classList.add('active');
             onlineModeBtn.classList.remove('active');
             onlineSection.style.display = 'none';
+            modeSelector.style.display = 'flex';
+            sizeSelector.style.display = 'flex';
+            proceedBtn.style.display = 'inline-block';
             setBoardSize(3);
             state.board = Array(9).fill(null);
             state.scores = { X: 0, O: 0 };
             state.currentPlayer = 'X';
-            lobby.classList.add('hidden');
-            gameArea.classList.remove('hidden');
+            // Start with lobby visible, game hidden
+            lobby.classList.remove('hidden');
+            gameArea.classList.add('hidden');
             updateUI();
-            connectionStatus.textContent = 'Offline mode – pass the device to your opponent.';
+            connectionStatus.textContent = 'Select mode and board, then click Proceed.';
 
             window.addEventListener('beforeunload', () => {
                 if (state.conn) {

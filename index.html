@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tic Tac Toe – Online</title>
+    <!-- PeerJS library for WebRTC -->
+    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="title">✦ Tic Tac Toe</div>
+            <div class="scoreboard">
+                <div class="score-item">
+                    <span class="x-color">✕</span>
+                    <span id="scoreX">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="o-color">◯</span>
+                    <span id="scoreO">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lobby (connection) -->
+        <div id="lobby" class="lobby">
+            <h3 style="color: rgba(255,255,255,0.7); font-weight: 400; margin-bottom: 12px;">Multiplayer</h3>
+
+            <!-- Board size selector -->
+            <div class="size-selector">
+                <span style="color: rgba(255,255,255,0.6); margin-right: 12px;">Board size:</span>
+                <button class="size-btn active" data-size="3">3×3</button>
+                <button class="size-btn" data-size="5">5×5</button>
+                <button class="size-btn" data-size="7">7×7</button>
+            </div>
+
+            <div id="hostSection">
+                <button id="hostBtn" class="btn btn-primary">🎮 Host Game</button>
+                <div id="hostIdDisplay" style="margin-top: 10px; display: none;">
+                    <div style="color: rgba(255,255,255,0.5);">Your room ID:</div>
+                    <div class="room-id-display" id="roomIdText">-----</div>
+                    <button id="copyIdBtn" class="btn btn-secondary" style="padding: 6px 16px; font-size:14px; margin-top: 4px;">📋 Copy</button>
+                </div>
+            </div>
+            <div style="margin: 16px 0; color: rgba(255,255,255,0.2);">— or —</div>
+            <div id="joinSection">
+                <input type="text" id="joinInput" placeholder="Paste room ID" />
+                <button id="joinBtn" class="btn btn-success">Join Game</button>
+            </div>
+            <div id="connectionStatus" style="margin-top: 12px; font-weight: 500; color: rgba(255,255,255,0.5);"></div>
+        </div>
+
+        <!-- Game Area (hidden until connected) -->
+        <div id="gameArea" class="game-area hidden">
+            <div class="turn-indicator" id="turnIndicator">
+                <span class="highlight x-turn" id="turnHighlight">✕</span>
+                <span id="turnText">'s turn</span>
+            </div>
+            <div class="board" id="board"></div>
+            <div class="status" id="status"></div>
+            <div class="actions">
+                <button class="btn btn-secondary" id="resetBtn">↻ New Game</button>
+                <button class="btn btn-danger" id="disconnectBtn">⏻ Disconnect</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
